@@ -1,6 +1,7 @@
 #ifndef SIGNAL_H
 #define SIGNAL_H
 
+#include <map>
 #include <optional>
 
 namespace sig {
@@ -75,26 +76,35 @@ namespace sig {
 
   template<typename Signature, typename Combiner = DiscardCombiner>
   class Signal {
+  private:
+    // map keeping track of functions
+    std::map<size_t, std::function<Signature>> slots;
+
+    // next id to set in map
+    size_t nextId;
+
+    Combiner combiner;
+
   public:
-    using combiner_type = /* implementation defined */;
+    using combiner_type = Combiner;
 
-    using result_type = /* implementation defined */;
+    using result_type = typename combiner_type::result_type;
 
-    Signal(Combiner combiner = Combiner()) {
-      // implementation defined
-    }
+    // Default constructor
+    Signal(Combiner combiner = Combiner()) : nextId(0), combiner(combiner) { }
 
+    // Constructor that allows forwarding to the constructor of combiner
     template<typename... CombinerArgs>
-    Signal(CombinerArgs ... args) {
-      // implementation defined
-    }
+    Signal(CombinerArgs ... args) : nextId(0), combiner(args...) { }
 
     std::size_t connectSlot(std::function<Signature> callback) {
-      // implementation defined
+      size_t slotId = nextId++;
+      slots[slotId] = callback;
+      return slotId;
     }
 
     void disconnectSlot(std::size_t id) {
-      // implementation defined
+      slots.erase(id);
     }
 
     result_type emitSignal(/* implementation defined */) {
