@@ -75,10 +75,13 @@ namespace sig {
   };
 
   template<typename Signature, typename Combiner = DiscardCombiner>
-  class Signal {
+  class Signal;
+
+  template<typename R, typename... Args, typename Combiner>
+  class Signal<R(Args...), Combiner> {
   private:
     // map keeping track of functions
-    std::map<size_t, std::function<Signature>> slots;
+    std::map<size_t, std::function<R(Args...)>> slots;
 
     // next id to set in map
     size_t nextId;
@@ -97,7 +100,7 @@ namespace sig {
     template<typename... CombinerArgs>
     Signal(CombinerArgs ... args) : nextId(0), combiner(args...) { }
 
-    std::size_t connectSlot(std::function<Signature> callback) {
+    std::size_t connectSlot(std::function<R(Args...)> callback) {
       size_t slotId = nextId++;
       slots[slotId] = callback;
       return slotId;
@@ -107,8 +110,12 @@ namespace sig {
       slots.erase(id);
     }
 
-    result_type emitSignal(/* implementation defined */) {
-      // implementation defined
+    result_type emitSignal(Args... args) {
+      for (auto &slot : slots) {
+        auto value = slot.second(args...);
+        combiner.combine(value);
+      }
+      return combiner.result();
     }
   };
 
