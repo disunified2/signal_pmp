@@ -1,6 +1,7 @@
 #ifndef SIGNAL_H
 #define SIGNAL_H
 
+#include <functional>
 #include <map>
 #include <optional>
 
@@ -8,15 +9,15 @@ namespace sig {
 
   class DiscardCombiner {
   public:
-    using result_type = /* implementation defined */;
+    using result_type = void;
 
     template<typename U>
-    void combine(/* implementation defined */ item) {
-      // implementation defined
+    void combine(U item) {
+      // nothing is done
     }
 
     result_type result() {
-      // implementation defined
+      // nothing is returned
     }
   };
 
