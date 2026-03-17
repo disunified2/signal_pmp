@@ -1,6 +1,7 @@
 #ifndef SIGNAL_H
 #define SIGNAL_H
 
+#include <functional>
 #include <map>
 #include <vector>
 #include <optional>
@@ -9,15 +10,15 @@ namespace sig {
 
   class DiscardCombiner {
   public:
-    using result_type = /* implementation defined */;
+    using result_type = void;
 
     template<typename U>
-    void combine(/* implementation defined */ item) {
-      // implementation defined
+    void combine(U item) {
+      // nothing is done
     }
 
     result_type result() {
-      // implementation defined
+      // nothing is returned
     }
   };
 
@@ -76,11 +77,16 @@ namespace sig {
 
   template<typename T, PredicateType PType = PredicateType::Binary>
   class PredicateCombiner {
+  private:
+    PredicateType type;
+    std::optional<T> lastItem;
+
   public:
-    using result_type = std::optional</* implementation defined */>;
+    using result_type = std::optional<T>;
 
     PredicateCombiner(/* implementation defined */ predicate) {
-      // implementation defined
+      type = PType;
+      lastItem = std::nullopt;
     }
 
     template<typename U>
@@ -89,7 +95,7 @@ namespace sig {
     }
 
     result_type result() {
-      // implementation defined
+      return lastItem;
     }
   };
 
