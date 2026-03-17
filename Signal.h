@@ -28,8 +28,7 @@ namespace sig {
 
     template<typename U>
     void combine(U item) {
-      if constexpr (std::is_same_v<result_type, void>) { }
-      else {
+      if constexpr (!std::is_same_v<result_type, void>) {
         res = static_cast<result_type>(item);
       }
     }
@@ -49,16 +48,25 @@ namespace sig {
   template<typename T>
   class VectorCombiner {
   public:
-    using result_type = /* implementation defined */;
+    using result_type = std::vector<T>;
 
     template<typename U>
-    void combine(/* implementation defined */ item) {
-      // implementation defined
+    void combine(U item) {
+      if constexpr (!std::is_same_v<T, void>) {
+        res.insert(static_cast<result_type>(item));
+      }
     }
 
     result_type result() {
-      // implementation defined
+      if constexpr (std::is_same_v<result_type, void>) {
+        return;
+      } else {
+        return res;
+      }
     }
+
+  private:
+    result_type res;
   };
 
   enum class PredicateType {
