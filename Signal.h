@@ -13,13 +13,9 @@ namespace sig {
     using result_type = void;
 
     template<typename U>
-    void combine(U item) {
-      // nothing is done
-    }
+    void combine([[maybe_unused]] U item) {}
 
-    result_type result() {
-      // nothing is returned
-    }
+    result_type result() {}
   };
 
   template<typename T>
