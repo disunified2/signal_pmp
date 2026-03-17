@@ -66,6 +66,7 @@ namespace sig {
     result_type res;
   };
 
+#if 0
   enum class PredicateType {
     Unary,
     Binary,
@@ -94,6 +95,7 @@ namespace sig {
       return lastItem;
     }
   };
+#endif
 
   template<typename Signature, typename Combiner = DiscardCombiner>
   class Signal;
