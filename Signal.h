@@ -2,6 +2,7 @@
 #define SIGNAL_H
 
 #include <map>
+#include <vector>
 #include <optional>
 
 namespace sig {
@@ -23,16 +24,26 @@ namespace sig {
   template<typename T>
   class LastCombiner {
   public:
-    using result_type = /* implementation defined */;
+    using result_type = T;
 
     template<typename U>
-    void combine(/* implementation defined */ item) {
-      // implementation defined
+    void combine(U item) {
+      if constexpr (std::is_same_v<result_type, void>) { }
+      else {
+        res = static_cast<result_type>(item);
+      }
     }
 
     result_type result() {
-      // implementation defined
+      if constexpr (std::is_same_v<result_type, void>) {
+        return;
+      }
+      else {
+        return res;
+      }
     }
+  private:
+    result_type res;
   };
 
   template<typename T>
