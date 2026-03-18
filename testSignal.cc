@@ -17,7 +17,6 @@ TEST(SignalTest, slotCalled) {
   sig.connectSlot([&acc](const int x) { acc += x; return x; });
 
   sig.emitSignal(3);
-
   EXPECT_EQ(3, acc);
 }
 TEST(SignalTest, multipleSlotsCalled) {
@@ -28,7 +27,6 @@ TEST(SignalTest, multipleSlotsCalled) {
   sig.connectSlot([&acc](const int x) { acc += x; return x; });
 
   sig.emitSignal(3);
-
   EXPECT_EQ(9, acc);
 }
 TEST(SignalTest, slotDeletion) {
@@ -38,7 +36,6 @@ TEST(SignalTest, slotDeletion) {
   sig.disconnectSlot(id);
 
   sig.emitSignal(1);
-
   EXPECT_EQ(0, count);
 }
 TEST(SignalTest, noSlots) {
@@ -47,15 +44,13 @@ TEST(SignalTest, noSlots) {
 }
 TEST(SignalTest, connectDisconnectEmit) {
   sig::Signal<int(int)> sig;
-
   const size_t id = sig.connectSlot([](const int x) { return x; });
-  sig.disconnectSlot(id);
 
+  sig.disconnectSlot(id);
   EXPECT_NO_THROW(sig.emitSignal(1));
 }
 TEST(SignalTest, nonExistentID) {
   sig::Signal<int(int)> sig;
-
   EXPECT_NO_THROW(sig.disconnectSlot(1));
 }
 TEST(SignalTest, doubleDisconnect) {
@@ -86,7 +81,6 @@ TEST(LastCombinerTest, singleSlot) {
   sig.connectSlot([](const int x) { return x; });
 
   const int res = sig.emitSignal(1);
-
   EXPECT_EQ(res, 1);
 }
 TEST(LastCombinerTest, multipleSlots) {
@@ -95,7 +89,6 @@ TEST(LastCombinerTest, multipleSlots) {
   sig.connectSlot([](const int x) { return 2*x; });
 
   const int res = sig.emitSignal(2);
-
   EXPECT_EQ(res, 4);
 }
 TEST(LastCombinerTest, voidReturn) {
@@ -149,6 +142,57 @@ TEST(VectorCombinerTest, multipleSlotsSize) {
   const auto res = sig.emitSignal(1);
   EXPECT_FALSE(res.empty());
   EXPECT_EQ(res.size(), 3);
+}
+
+/* Tests for Unary PredicateCombiner */
+
+TEST(UnaryPredicateCombinerTest, noSlots) {
+  sig::Signal<int(int), sig::PredicateCombiner<int, sig::PredicateType::Unary>> sig([](const int x) { return x > 0; });
+  const auto res = sig.emitSignal(1);
+
+  EXPECT_NO_THROW(sig.emitSignal(1));
+  EXPECT_EQ(res, std::nullopt);
+}
+TEST(UnaryPredicateCombinerTest, singleSlotTrue) {
+  sig::Signal<int(int), sig::PredicateCombiner<int, sig::PredicateType::Unary>> sig([](const int x) { return x > 0; });
+  sig.connectSlot([](const int x) { return x; });
+
+  const auto res = sig.emitSignal(1);
+  EXPECT_EQ(res, 1);
+}
+TEST(UnaryPredicateCombinerTest, singleSlotFalse) {
+  sig::Signal<int(int), sig::PredicateCombiner<int, sig::PredicateType::Unary>> sig([](const int x) { return x > 0; });
+  sig.connectSlot([](const int x) { return x; });
+
+  const auto res = sig.emitSignal(-1);
+  EXPECT_EQ(res, std::nullopt);
+}
+TEST(UnaryPredicateCombinerTest, multipleSlotsTrue) {
+  sig::Signal<int(int), sig::PredicateCombiner<int, sig::PredicateType::Unary>> sig([](const int x) { return x > 0; });
+  sig.connectSlot([](const int x) { return x; });
+  sig.connectSlot([](const int x) { return x + 2; });
+  sig.connectSlot([](const int x) { return x + 1; });
+
+  const auto res = sig.emitSignal(1);
+  EXPECT_EQ(res, 2);
+}
+TEST(UnaryPredicateCombinerTest, multipleSlotsTrueSomeFail) {
+  sig::Signal<int(int), sig::PredicateCombiner<int, sig::PredicateType::Unary>> sig([](const int x) { return x > 0; });
+  sig.connectSlot([](const int x) { return x; });
+  sig.connectSlot([](const int x) { return x * -1; });
+  sig.connectSlot([](const int x) { return x + 1; });
+
+  const auto res = sig.emitSignal(-1);
+  EXPECT_EQ(res, 1);
+}
+TEST(UnaryPredicateCombinerTest, multipleSlotsFalse) {
+  sig::Signal<int(int), sig::PredicateCombiner<int, sig::PredicateType::Unary>> sig([](const int x) { return x > 0; });
+  sig.connectSlot([](const int x) { return x; });
+  sig.connectSlot([](const int x) { return x + 1; });
+  sig.connectSlot([](const int x) { return x * 2; });
+
+  const auto res = sig.emitSignal(-10);
+  EXPECT_EQ(res, std::nullopt);
 }
 
 

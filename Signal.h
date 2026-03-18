@@ -39,7 +39,7 @@ namespace sig {
       }
     }
   private:
-    result_type res;
+    result_type res{};
   };
 
   template<typename T>
