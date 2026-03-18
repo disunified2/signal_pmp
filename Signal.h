@@ -16,6 +16,8 @@ namespace sig {
     void combine([[maybe_unused]] U item) {}
 
     result_type result() {}
+
+    void reset() {}
   };
 
   template<typename T>
@@ -38,6 +40,9 @@ namespace sig {
         return res;
       }
     }
+
+    void reset() {}
+
   private:
     result_type res{};
   };
@@ -60,6 +65,10 @@ namespace sig {
       } else {
         return res;
       }
+    }
+
+    void reset() {
+      res.clear();
     }
 
   private:
@@ -97,6 +106,10 @@ namespace sig {
           lastItem = item;
         }
       }
+    }
+
+    void reset() {
+      lastItem = std::nullopt;
     }
 
     result_type result() {
@@ -145,6 +158,9 @@ namespace sig {
     }
 
     result_type emitSignal(Args... args) {
+      // Reset the combine to not keep unwanted or deleted results
+      combiner.reset();
+
       if constexpr (!std::is_same_v<R, void>) {
         for (auto &slot : slots) {
           auto value = slot.second(args...);
