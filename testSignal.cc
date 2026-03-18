@@ -45,16 +45,36 @@ TEST(SignalTest, noSlots) {
   sig::Signal<int(int)> sig;
   EXPECT_NO_THROW(sig.emitSignal(1));
 }
+TEST(SignalTest, connectDisconnectEmit) {
+  sig::Signal<int(int)> sig;
+
+  const size_t id = sig.connectSlot([](const int x) { return x; });
+  sig.disconnectSlot(id);
+
+  EXPECT_NO_THROW(sig.emitSignal(1));
+}
+TEST(SignalTest, nonExistentID) {
+  sig::Signal<int(int)> sig;
+
+  EXPECT_NO_THROW(sig.disconnectSlot(1));
+}
+TEST(SignalTest, doubleDisconnect) {
+  sig::Signal<int(int)> sig;
+  const size_t id = sig.connectSlot([](int x) { return x; });
+  sig.disconnectSlot(id);
+  EXPECT_NO_THROW(sig.disconnectSlot(id));
+}
 
 /* Tests for DiscardCombiner */
 
 TEST(DiscardCombinerTest, returnVoid) {
-  sig::Signal<int(int), sig::DiscardCombiner> sig;
+  sig::Signal<int(int)> sig;
 
   using ResultType = decltype(sig.emitSignal(1));
 
   EXPECT_TRUE((std::is_same_v<ResultType, void>));
 }
+
 
 int main(int argc, char* argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
