@@ -13,13 +13,9 @@ namespace sig {
     using result_type = void;
 
     template<typename U>
-    void combine(U item) {
-      // nothing is done
-    }
+    void combine([[maybe_unused]] U item) {}
 
-    result_type result() {
-      // nothing is returned
-    }
+    result_type result() {}
   };
 
   template<typename T>
@@ -54,7 +50,7 @@ namespace sig {
     template<typename U>
     void combine(U item) {
       if constexpr (!std::is_same_v<T, void>) {
-        res.insert(static_cast<result_type>(item));
+        res.push_back(static_cast<T>(item));
       }
     }
 
@@ -70,6 +66,7 @@ namespace sig {
     result_type res;
   };
 
+
   enum class PredicateType {
     Unary,
     Binary,
@@ -77,26 +74,38 @@ namespace sig {
 
   template<typename T, PredicateType PType = PredicateType::Binary>
   class PredicateCombiner {
-  private:
-    PredicateType type;
-    std::optional<T> lastItem;
-
   public:
+    using predicate_type = std::conditional_t<
+      PType == PredicateType::Unary,
+      std::function<bool(const T&)>,
+      std::function<bool(const T&, const T&)>
+    >;
+
     using result_type = std::optional<T>;
 
-    PredicateCombiner(/* implementation defined */ predicate) {
-      type = PType;
-      lastItem = std::nullopt;
-    }
+    PredicateCombiner(predicate_type predicate) : predicate(predicate) {}
 
     template<typename U>
-    void combine(/* implementation defined */ item) {
-      // implementation defined
+    void combine(U item) {
+      // This decides where the predicate has one or two inputs
+      if constexpr (PType == PredicateType::Unary) {
+        if (predicate(item)) {
+          lastItem = item;
+        }
+      } else {
+        if (lastItem == std::nullopt || predicate(*lastItem, item)) {
+          lastItem = item;
+        }
+      }
     }
 
     result_type result() {
       return lastItem;
     }
+
+  private:
+    std::optional<T> lastItem;
+    predicate_type predicate;
   };
 
   template<typename Signature, typename Combiner = DiscardCombiner>
@@ -136,9 +145,11 @@ namespace sig {
     }
 
     result_type emitSignal(Args... args) {
-      for (auto &slot : slots) {
-        auto value = slot.second(args...);
-        combiner.combine(value);
+      if constexpr (!std::is_same_v<R, void>) {
+        for (auto &slot : slots) {
+          auto value = slot.second(args...);
+          combiner.combine(value);
+        }
       }
       return combiner.result();
     }
