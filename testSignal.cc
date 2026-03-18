@@ -195,6 +195,64 @@ TEST(UnaryPredicateCombinerTest, multipleSlotsFalse) {
   EXPECT_EQ(res, std::nullopt);
 }
 
+/* Tests for Binary PredicateCombiner */
+
+TEST(BinaryPredicateCombinerTest, noSlots) {
+  sig::Signal<int(int), sig::PredicateCombiner<int, sig::PredicateType::Binary>> sig([](const int x, const int y) { return x < y; });
+
+  const auto res = sig.emitSignal(2);
+  EXPECT_NO_THROW(sig.emitSignal(1));
+  EXPECT_EQ(res, std::nullopt);
+}
+TEST(BinaryPredicateCombinerTest, singleSlot) {
+  sig::Signal<int(int), sig::PredicateCombiner<int, sig::PredicateType::Binary>> sig([](const int x, const int y) { return x < y; });
+  sig.connectSlot([](const int x) { return x; });
+
+  const auto res = sig.emitSignal(2);
+  EXPECT_EQ(res, 2);
+}
+TEST(BinaryPredicateCombinerTest, multipleSlotsIncreasing) {
+  sig::Signal<int(int), sig::PredicateCombiner<int, sig::PredicateType::Binary>> sig([](const int x, const int y) { return x < y; });
+  sig.connectSlot([](const int x) { return x; });
+  sig.connectSlot([](const int x) { return x + 1; });
+  sig.connectSlot([](const int x) { return x + 2; });
+
+  const auto res = sig.emitSignal(1);
+  EXPECT_EQ(res, 3);
+}
+TEST(BinaryPredicateCombinerTest, multipleSlotsMiddle) {
+  sig::Signal<int(int), sig::PredicateCombiner<int, sig::PredicateType::Binary>> sig([](const int x, const int y) { return x < y; });
+  sig.connectSlot([](const int x) { return x; });
+  sig.connectSlot([](const int x) { return x + 4; });
+  sig.connectSlot([](const int x) { return x + 2; });
+
+  const auto res = sig.emitSignal(1);
+  EXPECT_EQ(res, 5);
+}
+TEST(BinaryPredicateCombinerTest, multipleSlotsDecreasing) {
+  sig::Signal<int(int), sig::PredicateCombiner<int, sig::PredicateType::Binary>> sig([](const int x, const int y) { return x < y; });
+  sig.connectSlot([](const int x) { return x + 9; });
+  sig.connectSlot([](const int x) { return x + 5; });
+  sig.connectSlot([](const int x) { return x + 2; });
+  sig.connectSlot([](const int x) { return x + 1; });
+
+  const auto res = sig.emitSignal(1);
+  EXPECT_EQ(res, 10);
+}
+TEST(BinaryPredicateCombinerTest, multipleSlotsDisconnected) {
+  sig::Signal<int(int), sig::PredicateCombiner<int, sig::PredicateType::Binary>> sig([](const int x, const int y) { return x < y; });
+  sig.connectSlot([](const int x) { return x; });
+  sig.connectSlot([](const int x) { return x + 1; });
+  const size_t id = sig.connectSlot([](const int x) { return x + 2; });
+
+  auto res = sig.emitSignal(1);
+  EXPECT_EQ(res, 3);
+
+  sig.disconnectSlot(id);
+  res = sig.emitSignal(1);
+  EXPECT_EQ(res, 2);
+}
+
 
 int main(int argc, char* argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
