@@ -143,6 +143,31 @@ TEST(VectorCombinerTest, multipleSlotsSize) {
   EXPECT_FALSE(res.empty());
   EXPECT_EQ(res.size(), 3);
 }
+TEST(VectorCombinerTest, multipleSlotsDeleted) {
+  sig::Signal<int(int), sig::VectorCombiner<int>> sig;
+  sig.connectSlot([](const int x) { return x; });
+  sig.connectSlot([](const int x) { return x + 1; });
+  const size_t id = sig.connectSlot([](const int x) { return x + 2; });
+
+  const auto res = sig.emitSignal(1);
+  EXPECT_FALSE(res.empty());
+  EXPECT_EQ(res.size(), 3);
+  int count = 1;
+  for (auto i : res) {
+    EXPECT_EQ(i, count);
+    count++;
+  }
+
+  sig.disconnectSlot(id);
+  const auto res2 = sig.emitSignal(1);
+  EXPECT_FALSE(res2.empty());
+  EXPECT_EQ(res2.size(), 2);
+  count = 1;
+  for (auto i : res2) {
+    EXPECT_EQ(i, count);
+    count++;
+  }
+}
 
 /* Tests for Unary PredicateCombiner */
 
