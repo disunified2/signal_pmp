@@ -75,6 +75,82 @@ TEST(DiscardCombinerTest, returnVoid) {
   EXPECT_TRUE((std::is_same_v<ResultType, void>));
 }
 
+/* Tests for LastCombiner */
+
+TEST(LastCombinerTest, noSlots) {
+  sig::Signal<int(int)> sig;
+  EXPECT_NO_THROW(sig.emitSignal(1));
+}
+TEST(LastCombinerTest, singleSlot) {
+  sig::Signal<int(int), sig::LastCombiner<int>> sig;
+  sig.connectSlot([](const int x) { return x; });
+
+  const int res = sig.emitSignal(1);
+
+  EXPECT_EQ(res, 1);
+}
+TEST(LastCombinerTest, multipleSlots) {
+  sig::Signal<int(int), sig::LastCombiner<int>> sig;
+  sig.connectSlot([](const int x) { return x; });
+  sig.connectSlot([](const int x) { return 2*x; });
+
+  const int res = sig.emitSignal(2);
+
+  EXPECT_EQ(res, 4);
+}
+TEST(LastCombinerTest, voidReturn) {
+  sig::Signal<void(int), sig::LastCombiner<int>> sig;
+  sig.connectSlot([](const int x) { printf("%d\n", x); });
+
+  const int res = sig.emitSignal(2);
+  EXPECT_EQ(res, 0);
+}
+
+/* Tests for VectorCombiner */
+
+TEST(VectorCombinerTest, noSlots) {
+  sig::Signal<int(int), sig::VectorCombiner<int>> sig;
+
+  const auto res = sig.emitSignal(2);
+  EXPECT_TRUE(res.empty());
+}
+TEST(VectorCombinerTest, multipleSlots) {
+  sig::Signal<int(int), sig::VectorCombiner<int>> sig;
+  sig.connectSlot([](const int x) { return x; });
+  sig.connectSlot([](const int x) { return x; });
+  sig.connectSlot([](const int x) { return x; });
+
+  const auto res = sig.emitSignal(1);
+  EXPECT_FALSE(res.empty());
+  for (auto i : res) {
+    EXPECT_EQ(i, 1);
+  }
+}
+TEST(VectorCombinerTest, multipleSlotsOrder) {
+  sig::Signal<int(int), sig::VectorCombiner<int>> sig;
+  sig.connectSlot([](const int x) { return x; });
+  sig.connectSlot([](const int x) { return x + 1; });
+  sig.connectSlot([](const int x) { return x + 2; });
+
+  const auto res = sig.emitSignal(1);
+  EXPECT_FALSE(res.empty());
+  int count = 1;
+  for (auto i : res) {
+    EXPECT_EQ(i, count);
+    count++;
+  }
+}
+TEST(VectorCombinerTest, multipleSlotsSize) {
+  sig::Signal<int(int), sig::VectorCombiner<int>> sig;
+  sig.connectSlot([](const int x) { return x; });
+  sig.connectSlot([](const int x) { return x + 1; });
+  sig.connectSlot([](const int x) { return x + 2; });
+
+  const auto res = sig.emitSignal(1);
+  EXPECT_FALSE(res.empty());
+  EXPECT_EQ(res.size(), 3);
+}
+
 
 int main(int argc, char* argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
