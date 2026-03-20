@@ -44,13 +44,13 @@ namespace sig {
     void reset() {}
 
   private:
-    result_type res{};
+    std::conditional_t<std::is_void_v<T>, int, result_type> res{};
   };
 
   template<typename T>
   class VectorCombiner {
   public:
-    using result_type = std::vector<T>;
+    using result_type = std::conditional_t<std::is_void_v<T>, void, std::vector<T>>;
 
     template<typename U>
     void combine(U item) {
@@ -68,11 +68,13 @@ namespace sig {
     }
 
     void reset() {
-      res.clear();
+      if constexpr (std::is_same_v<result_type, std::vector<T>>) {
+        res.clear();
+      }
     }
 
   private:
-    result_type res;
+    std::conditional_t<std::is_void_v<result_type>, int, result_type> res;
   };
 
 
@@ -90,7 +92,7 @@ namespace sig {
       std::function<bool(const T&, const T&)>
     >;
 
-    using result_type = std::optional<T>;
+    using result_type = std::conditional_t<std::is_void_v<T>, void, std::optional<T>>;
 
     PredicateCombiner(predicate_type predicate) : predicate(predicate) {}
 
@@ -117,7 +119,7 @@ namespace sig {
     }
 
   private:
-    std::optional<T> lastItem;
+    std::conditional_t<std::is_void_v<result_type>, int, result_type> lastItem;
     predicate_type predicate;
   };
 
