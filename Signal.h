@@ -84,15 +84,39 @@ namespace sig {
   };
 
   template<typename T, PredicateType PType = PredicateType::Binary>
+  class PredicateCombiner;
+
+  template<PredicateType PType>
+  class PredicateCombiner<void, PType> {
+  public:
+    using predicate_type = std::function<bool()>;
+    using result_type = void;
+
+    PredicateCombiner(predicate_type predicate) : predicate(predicate) {}
+
+    template<typename U>
+    void combine([[maybe_unused]] U item) {
+      predicate();
+    }
+
+    void reset() {}
+
+    result_type result() {}
+
+  private:
+    predicate_type predicate;
+  };
+
+  template<typename T, PredicateType PType>
   class PredicateCombiner {
   public:
     using predicate_type = std::conditional_t<
-      PType == PredicateType::Unary,
-      std::function<bool(const T&)>,
-      std::function<bool(const T&, const T&)>
+        PType == PredicateType::Unary,
+        std::function<bool(const T&)>,
+        std::function<bool(const T&, const T&)>
     >;
 
-    using result_type = std::conditional_t<std::is_void_v<T>, void, std::optional<T>>;
+    using result_type = std::optional<T>;
 
     PredicateCombiner(predicate_type predicate) : predicate(predicate) {}
 
@@ -119,7 +143,7 @@ namespace sig {
     }
 
   private:
-    std::conditional_t<std::is_void_v<result_type>, int, result_type> lastItem;
+    result_type lastItem;
     predicate_type predicate;
   };
 
